@@ -1,0 +1,23 @@
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+const DATABASE_URL = process.env.DATABASE_URL
+const DATABASE_URL_DEV = process.env.DATABASE_URL_DEV
+const DB_HOST = process.env.DB_HOST
+const DB_USERNAME = process.env.DB_USERNAME
+const DB_NAME = process.env.DB_NAME
+const DB_PASSWORD = process.env.DB_PASSWORD
+const PORT = process.env.PORT
+
+const variables = {
+  database_url: DATABASE_URL,
+  database_url_dev: DATABASE_URL_DEV,
+  db_host: DB_HOST,
+  db_username: DB_USERNAME,
+  db_password: DB_PASSWORD,
+  db_name: DB_NAME,
+  port: PORT,
+}
+
+export default variables

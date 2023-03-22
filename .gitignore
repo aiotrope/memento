@@ -71,6 +71,8 @@ typings/
 # dotenv environment variables file
 .env
 .env.test
+.env.development
+.env.production
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -80,7 +82,6 @@ typings/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
 
 # Gatsby files
 .cache/
@@ -102,3 +103,31 @@ dist
 
 # TernJS port file
 .tern-port
+
+.DS_Store
+
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
+.vscode/
+
+build
+
+node_modules
+
+dist/
