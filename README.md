@@ -25,9 +25,34 @@ $ GRANT CONNECT ON DATABASE db TO user;
 $ GRANT ALL PRIVILEGES ON DATABASE db TO user;
 
 # Sequelize
-
 # Initialize sequelize project
 $ sequelize init
 # create models and migrations with sequelize-cli
 $ sequelize model:generate --name ModelName --attributes name:string,username:string,password:string
+
+# App
+# generate express app
+$ express --view=ejs backend
+
+# generate react app
+$ yarn create react-app frontend .
+
+# run backend dev server at port:8080
+$ yarn dev
+
+# run production build at port:8080
+$ yarn start
+
+# run frontend dev server at port:3000
+$ cd frontend && yarn run start
+
+# build static assets
+$ yarn build
+
+# format code
+$ yarn prettier
+
+# lint code
+$ yarn eslint
+
 ```
