@@ -1,17 +1,16 @@
-import fs from 'fs'
-import path from 'path'
-import Sequelize from 'sequelize'
-import process from 'process'
-import variables from '../utils/variables'
+import { readdirSync } from 'fs'
+import { basename as _basename, join } from 'path'
+import Sequelize, { DataTypes } from 'sequelize'
+import { env as _env } from 'process'
 
-const basename = path.basename(__filename)
-const env = process.env.NODE_ENV || 'development'
-const config = require(__dirname + '/../config/config.js')[env]
+const basename = _basename(__filename)
+const env = _env.NODE_ENV || 'development'
+const config = require(__dirname + '/../config/config.json')[env]
 const db = {}
 
 let sequelize
-if (process.env.NODE_ENV === 'production') {
-  sequelize = new Sequelize(variables.database_url)
+if (config.use_env_variable) {
+  sequelize = new Sequelize(_env[config.use_env_variable], config)
 } else {
   sequelize = new Sequelize(
     config.database,
@@ -21,7 +20,7 @@ if (process.env.NODE_ENV === 'production') {
   )
 }
 
-fs.readdirSync(__dirname)
+readdirSync(__dirname)
   .filter((file) => {
     return (
       file.indexOf('.') !== 0 &&
@@ -31,10 +30,7 @@ fs.readdirSync(__dirname)
     )
   })
   .forEach((file) => {
-    const model = require(path.join(__dirname, file))(
-      sequelize,
-      Sequelize.DataTypes
-    )
+    const model = require(join(__dirname, file))(sequelize, DataTypes)
     db[model.name] = model
   })
 
