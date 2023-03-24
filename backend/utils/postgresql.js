@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize'
 
-import variables from '../config/variables'
-import logger from './logger'
+import variables from '../config/variables.js'
+import logger from './logger.js'
 
 let sequelize
 

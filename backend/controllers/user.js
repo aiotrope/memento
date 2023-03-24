@@ -1,31 +1,29 @@
-import { Op } from 'sequelize'
-require('express-async-errors')
+//require('express-async-errors')
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 
-import model from '../models'
-import variables from '../config/variables'
+//import model from '../models'
+import User from '../models/user.js'
+import variables from '../config/variables.js'
 
-const { User } = model
-
-const signup = async (req, res) => {
+export const signup = async (req, res) => {
   const { name, username, password } = req.body
   const saltRounds = 10
 
-  const user = await User.findOne({ where: { [Op.or]: [{ username }] } })
+  const user = await User.findOne({ where: { username: username } })
   if (user) throw Error('Cannot use the username provided!')
 
   const passwordHash = await bcrypt.hash(password, saltRounds)
   const data = {
-    username,
-    name,
-    passwordHash,
+    username: username,
+    name: name,
+    passwordHash: passwordHash,
   }
   const newUser = await User.create(data)
   res.status(201).json(newUser)
 }
 
-const login = async (req, res) => {
+export const login = async (req, res) => {
   const { username, password } = req.body
 
   const user = await User.findOne({
@@ -56,17 +54,15 @@ const login = async (req, res) => {
   }
 }
 
-const list = async (req, res) => {
-  const users = await User.findAndCountAll({
-    order: [['id', 'DESC']],
-  })
-  res.status(200).json(users)
+export const list = async (req, res) => {
+  //const users = await User.findAll()
+  res.send('Hello')
 }
 
-const userController = {
+/* const userController = {
   signup,
   login,
-  list,
 }
 
 export default userController
+ */

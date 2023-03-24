@@ -1,53 +1,26 @@
-import { readdirSync } from 'fs'
-import path from 'path'
-import Sequelize, { DataTypes } from 'sequelize'
-//import { env as _env } from 'process'
-import enVariables from '../config/config.json'
+import Sequelize from 'sequelize'
+import variables from '../config/variables.js'
+import logger from '../utils/logger.js'
 
-const basename = path.basename(__filename)
-const env = process.env.NODE_ENV || 'development'
-//const config = require(__dirname + '/../config/config.json')[env]
-const config = enVariables[env]
-const db = {}
-
-console.log(config.use_env_variable)
 let sequelize
-if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], config)
+
+if (process.env === 'development') {
+  sequelize = new Sequelize(variables.database_url_dev, { dialect: 'postgres' })
+} else if (process.env === 'test') {
+  sequelize = new Sequelize(variables.database_url_test, {
+    dialect: 'postgres',
+  })
 } else {
-  sequelize = new Sequelize(
-    config.database,
-    config.username,
-    config.password,
-    config
-  )
+  sequelize = new Sequelize(variables.database_url, { dialect: 'postgres' })
 }
 
-readdirSync(__dirname)
-  .filter((file) => {
-    return (
-      file.indexOf('.') !== 0 &&
-      file !== basename &&
-      file.slice(-3) === '.js' &&
-      file.indexOf('.test.js') === -1
-    )
+sequelize
+  .authenticate()
+  .then(() => {
+    logger.info('Connection has been established successfully.')
   })
-  .forEach((file) => {
-    //const model = require(join(__dirname, file))(sequelize, DataTypes)
-    const model = require(path.join(__dirname, file)).default(
-      sequelize,
-      DataTypes
-    )
-    db[model.name] = model
+  .catch((err) => {
+    logger.error('Unable to connect to the database:', err)
   })
 
-Object.keys(db).forEach((modelName) => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db)
-  }
-})
-
-db.sequelize = sequelize
-db.Sequelize = Sequelize
-
-export default db
+export default sequelize

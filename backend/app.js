@@ -4,9 +4,9 @@ import helmet from 'helmet'
 import cors from 'cors'
 
 //import dbConnection from './utils/db'
-import { morganMiddleware } from './utils/logger'
-import middleware from './utils/middleware'
-//import userRouter from './routes/user'
+import { morganMiddleware } from './utils/logger.js'
+import middleware from './utils/middleware.js'
+import userRoutes from './routes/user'
 
 const app = express()
 
@@ -26,7 +26,7 @@ app.use(require('sanitize').middleware)
 
 app.use(morganMiddleware)
 
-//app.use('/api/v1/users', userRouter)
+app.use('/api/v1/users', userRoutes)
 
 app.use(middleware.endPoint404)
 

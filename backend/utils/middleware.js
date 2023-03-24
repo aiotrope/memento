@@ -1,5 +1,5 @@
 import createHttpError from 'http-errors'
-import logger from './logger'
+import logger from './logger.js'
 
 const endPoint404 = (_req, _res, next) => {
   next(createHttpError(404))
