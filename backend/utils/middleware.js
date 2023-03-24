@@ -23,6 +23,9 @@ const errorHandler = (error, req, res, next) => {
       error: `Name ${req.body.name} cannot be used!`,
     })
   }
+  if (error.message === 'Cannot use the username provided!') {
+    res.status(422).json({ error: error.message })
+  }
 
   next(error)
 }

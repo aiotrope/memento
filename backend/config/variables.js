@@ -10,6 +10,7 @@ const DB_USERNAME = process.env.DB_USERNAME
 const DB_NAME = process.env.DB_NAME
 const DB_PASSWORD = process.env.DB_PASSWORD
 const PORT = process.env.PORT
+const JWT_KEY = process.env.JWT_KEY
 
 const variables = {
   database_url: DATABASE_URL,
@@ -20,6 +21,7 @@ const variables = {
   db_password: DB_PASSWORD,
   db_name: DB_NAME,
   port: PORT,
+  jwt_key: JWT_KEY,
 }
 
 export default variables
