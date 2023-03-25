@@ -1,6 +1,4 @@
-import dotenv from 'dotenv'
-
-dotenv.config()
+require('dotenv').config()
 
 const DATABASE_URL = process.env.DATABASE_URL
 const DATABASE_URL_DEV = process.env.DATABASE_URL_DEV
@@ -24,4 +22,4 @@ const variables = {
   jwt_key: JWT_KEY,
 }
 
-export default variables
+module.exports = variables

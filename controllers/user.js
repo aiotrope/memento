@@ -1,16 +1,16 @@
-//require('express-async-errors')
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcrypt'
+require('express-async-errors')
+const jwt = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 
-//import model from '../models'
-import User from '../models/user.js'
-import variables from '../config/variables.js'
+const models = require('../models')
 
-export const signup = async (req, res) => {
+const variables = require('../config/variables')
+
+const signup = async (req, res) => {
   const { name, username, password } = req.body
   const saltRounds = 10
 
-  const user = await User.findOne({ where: { username: username } })
+  const user = await models.User.findOne({ where: { username: username } })
   if (user) throw Error('Cannot use the username provided!')
 
   const passwordHash = await bcrypt.hash(password, saltRounds)
@@ -19,14 +19,14 @@ export const signup = async (req, res) => {
     name: name,
     passwordHash: passwordHash,
   }
-  const newUser = await User.create(data)
-  res.status(201).json(newUser)
+  let newUser = await models.User.create(data)
+  return res.status(201).json(newUser)
 }
 
-export const login = async (req, res) => {
+const login = async (req, res) => {
   const { username, password } = req.body
 
-  const user = await User.findOne({
+  const user = await models.User.findOne({
     where: { username: username },
   })
 
@@ -54,15 +54,15 @@ export const login = async (req, res) => {
   }
 }
 
-export const list = async (req, res) => {
-  //const users = await User.findAll()
-  res.send('Hello')
+const list = async (req, res) => {
+  const users = await models.User.findAll({ raw: true, nest: true })
+
+  console.log(JSON.stringify(users, null, 2))
+  res.status(200).json(users)
 }
 
-/* const userController = {
+module.exports = {
   signup,
   login,
+  list,
 }
-
-export default userController
- */
