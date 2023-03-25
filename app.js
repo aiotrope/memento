@@ -1,16 +1,11 @@
-var express = require('express')
-var path = require('path')
-var cookieParser = require('cookie-parser')
-var logger = require('morgan')
-//const db = require('./models')
+const express = require('express')
+const path = require('path')
+const cookieParser = require('cookie-parser')
+const logger = require('morgan')
 
-var userRouter = require('./routes/user')
+const userRouter = require('./routes/user')
 
-var app = express()
-
-/* db.sequelize.sync({ force: true }).then(() => {
-  console.log('db has been re sync')
-}) */
+const app = express()
 
 app.use(logger('dev'))
 app.use(express.json())

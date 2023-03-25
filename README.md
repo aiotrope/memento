@@ -57,6 +57,10 @@ $ dropdb dbname
 $ DROP OWNED BY user;
 $ DROP USER user;
 
+# display table data
+$ \c dbname
+$ Table "tablename";
+
 # Sequelize
 
 # generate/initialize db config dirs based on .sequilizerc using globally installed sequelize-cli
@@ -84,9 +88,6 @@ $ yarn start
 
 # run frontend dev server at port:3000
 $ cd frontend && yarn run start
-
-# build backend and transpile backend codes
-$ yarn build
 
 # build static assets (frontend)
 $ yarn build
