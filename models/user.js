@@ -1,15 +1,18 @@
 'use strict'
-//const { Model } = require('sequelize')
+const { Model } = require('sequelize')
 module.exports = (sequelize, DataTypes) => {
-  const User = sequelize.define(
-    'User',
+  class User extends Model {
+    // eslint-disable-next-line no-unused-vars
+    static associate(models) {
+      User.hasMany(models.Blog, {
+        foreignKey: 'userId',
+        as: 'blogs',
+        onDelete: 'CASCADE',
+      })
+    }
+  }
+  User.init(
     {
-      id: {
-        type: DataTypes.INTEGER(10),
-        allowNull: false,
-        primaryKey: true,
-        autoIncrement: true,
-      },
       name: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -31,16 +34,9 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
     {
-      timestamps: true,
+      sequelize,
+      modelName: 'User',
     }
   )
-  User.associate = function (models) {
-    User.hasMany(models.Blog, {
-      foreignKey: 'userId',
-      as: 'blogs',
-      onDelete: 'CASCADE',
-    })
-  }
-
   return User
 }

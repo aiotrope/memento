@@ -7,7 +7,7 @@
 const app = require('../app')
 const debug = require('debug')('memento:server')
 const http = require('http')
-const variables = require('../config/variables')
+const variables = require('../util/variables')
 
 /**
  * Get port from environment and store in Express.

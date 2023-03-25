@@ -2,15 +2,15 @@ require('express-async-errors')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 
-const models = require('../models')
-
-const variables = require('../config/variables')
+const User = require('../models').User
+const Blog = require('../models').Blog
+const variables = require('../util/variables')
 
 const signup = async (req, res) => {
   const { name, username, password } = req.body
   const saltRounds = 10
 
-  const user = await models.User.findOne({ where: { username: username } })
+  const user = await User.findOne({ where: { username: username } })
   if (user) throw Error('Cannot use the username provided!')
 
   const passwordHash = await bcrypt.hash(password, saltRounds)
@@ -19,14 +19,14 @@ const signup = async (req, res) => {
     name: name,
     passwordHash: passwordHash,
   }
-  let newUser = await models.User.create(data)
+  let newUser = await User.create(data)
   return res.status(201).json(newUser)
 }
 
 const login = async (req, res) => {
   const { username, password } = req.body
 
-  const user = await models.User.findOne({
+  const user = await User.findOne({
     where: { username: username },
   })
 
@@ -55,14 +55,40 @@ const login = async (req, res) => {
 }
 
 const list = async (req, res) => {
-  const users = await models.User.findAll({ raw: true, nest: true })
+  const users = await User.findAll({
+    raw: true,
+    nest: true,
+    attributes: { exclude: ['passwordHash'] },
+    include: [
+      {
+        model: Blog,
+        as: 'blogs',
+      },
+    ],
+  })
 
-  console.log(JSON.stringify(users, null, 2))
+  //console.log(JSON.stringify(users, null, 2))
   res.status(200).json(users)
+}
+
+const retrieve = async (req, res) => {
+  const id = req.params.id
+  const user = await User.findByPk(id, {
+    attributes: { exclude: ['passwordHash'] },
+    include: [
+      {
+        model: Blog,
+        as: 'blogs',
+      },
+    ],
+  })
+  if (!user) throw Error('User not found!')
+  res.status(200).json(user)
 }
 
 module.exports = {
   signup,
   login,
   list,
+  retrieve,
 }

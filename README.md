@@ -45,7 +45,7 @@ $ \dt+ # show all tables in the current schema
 # query db
 $ psql -U postgres dbname
 $ \dt
-$ DROP TABLE table_name; # drop table on the current schema
+$ DROP TABLE "table_name"; # drop table on the current schema
 
 # list tables of all schema
 $ \dt *.*
@@ -60,6 +60,10 @@ $ DROP USER user;
 # display table data
 $ \c dbname
 $ Table "tablename";
+
+# delete a row with condition
+$ \c dbname
+$ DELETE FROM "Blogs" WHERE id = 1;
 
 # Sequelize
 
