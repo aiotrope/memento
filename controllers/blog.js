@@ -89,10 +89,21 @@ const omit = async (req, res) => {
   }
 }
 
+const authors = async (req, res) => {
+  const response = await Blog.findAll({
+    attributes: ['author', 'title', 'likes'],
+    group: 'id',
+    order: [['likes', 'DESC']],
+  })
+
+  res.status(200).json(response)
+}
+
 module.exports = {
   create,
   list,
   retrieve,
   update,
   omit,
+  authors,
 }

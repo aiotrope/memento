@@ -9,6 +9,7 @@ const middleware = require('./util/middleware')
 
 const userRouter = require('./routes/user')
 const blogRouter = require('./routes/blog')
+const authorRouter = require('./routes/author')
 
 //const db = require('./models')
 
@@ -37,6 +38,8 @@ app.use(express.static(path.join(__dirname, 'public')))
 app.use('/api/users', userRouter)
 
 app.use('/api/blogs', blogRouter)
+
+app.use('/api/authors', authorRouter)
 
 app.use(require('sanitize').middleware)
 
