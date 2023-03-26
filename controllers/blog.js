@@ -1,4 +1,5 @@
 require('express-async-errors')
+const { Op } = require('sequelize')
 const jwt = require('jsonwebtoken')
 //const _ = require('lodash')
 
@@ -17,7 +18,9 @@ const create = async (req, res) => {
 }
 
 const list = async (req, res) => {
-  const blogs = await Blog.findAll({
+  let search = req.query.search
+  if (!search) search = ''
+  let blogs = await Blog.findAll({
     raw: true,
     nest: true,
     include: [
@@ -27,8 +30,16 @@ const list = async (req, res) => {
         attributes: { exclude: ['passwordHash'] },
       },
     ],
+    where: {
+      [Op.or]: [
+        { title: { [Op.iLike]: '%' + search + '%' } },
+        { author: { [Op.iLike]: '%' + search + '%' } },
+      ],
+    },
+    order: [['likes', 'DESC']],
   })
   //console.log(JSON.stringify(blogs, null, 2))
+
   res.status(200).json(blogs)
 }
 

@@ -25,7 +25,7 @@ router.post(
   controllers.create
 )
 
-router.get('/', controllers.list)
+router.get('/:search?', controllers.list)
 
 router.get('/:id', controllers.retrieve)
 
