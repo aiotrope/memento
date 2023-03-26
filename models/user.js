@@ -1,5 +1,6 @@
 'use strict'
 const { Model } = require('sequelize')
+const regx = require('../util/regex')
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     // eslint-disable-next-line no-unused-vars
@@ -17,15 +18,16 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          is: /^[a-zA-Z]{0,}[\s]?[a-zA-Z.]{0,}?[a-zA-Z]{0,}[\s]?[a-zA-Z.]{0,}?[a-zA-Z]{0,}[\s]?[a-zA-Z.]{0,}?$/gm,
+          is: regx.name,
         },
       },
       username: {
         type: DataTypes.STRING,
         allowNull: false,
         unique: true,
+        isEmail: true,
         validate: {
-          is: /^[a-zA-Z0-9$&+,:;=?@#|'<>.^*()%!-{}€"'ÄöäÖØÆ`~_]{3,}$/gm,
+          is: regx.email,
         },
       },
       passwordHash: {

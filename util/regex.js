@@ -8,11 +8,15 @@ const username = /^[a-zA-Z0-9$&+,:;=?@#|'<>.^*()%!-{}€"'ÄöäÖØÆ`~_]{3,}$/
 
 const password = /^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&?"*]).*$/gm
 
+// eslint-disable-next-line no-useless-escape
+const email = /^[\w\-\.]+@([\w-]+\.)+[\w-]{2,}$/gm
+
 const regx = {
   url,
   name,
   username,
   password,
+  email,
 }
 
 module.exports = regx

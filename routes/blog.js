@@ -26,6 +26,16 @@ router.post(
 )
 
 router.get('/', controllers.list)
+
 router.get('/:id', controllers.retrieve)
+
+router.put(
+  '/:id',
+  tokenExtractor,
+  userExtractor,
+  middleware.validate(createBlogSchema),
+  controllers.update
+)
+router.delete('/:id', tokenExtractor, userExtractor, controllers.omit)
 
 module.exports = router

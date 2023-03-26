@@ -85,10 +85,30 @@ const retrieve = async (req, res) => {
   if (!user) throw Error('User not found!')
   res.status(200).json(user)
 }
+const update = async (req, res) => {
+  const username = req.params.username
+  const currentUser = req.currentUser
+  const user = await User.findOne({ where: { username: username } })
+
+  if (!user) throw Error('User not found!')
+  if (currentUser.username !== username) {
+    throw Error('Unauthorize to update user!')
+  }
+
+  const updateUser = await User.update(req.body, {
+    where: { username: username },
+  })
+
+  if (updateUser) {
+    const updatedUser = await User.findOne({ where: { username: username } })
+    res.status(200).json(updatedUser)
+  }
+}
 
 module.exports = {
   signup,
   login,
   list,
   retrieve,
+  update,
 }

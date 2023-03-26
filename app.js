@@ -34,9 +34,9 @@ app.use(express.static(path.join(__dirname, 'public')))
   console.log('db has been re sync')
 }) */
 
-app.use('/api/v1/users', userRouter)
+app.use('/api/users', userRouter)
 
-app.use('/api/v1/blogs', blogRouter)
+app.use('/api/blogs', blogRouter)
 
 app.use(require('sanitize').middleware)
 

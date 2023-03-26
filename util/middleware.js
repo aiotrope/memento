@@ -88,6 +88,15 @@ const errorHandler = (error, req, res, next) => {
   if (error.message === 'Blog not found!') {
     res.status(404).json({ error: error.message })
   }
+  if (error.message === 'Unauthorize to update blog!') {
+    res.status(401).json({ error: error.message })
+  }
+  if (error.message === 'Unauthorize to delete blog!') {
+    res.status(401).json({ error: error.message })
+  }
+  if (error.message === 'Unauthorize to update user!') {
+    res.status(401).json({ error: error.message })
+  }
 
   next(error)
 }
