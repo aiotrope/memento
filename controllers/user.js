@@ -1,17 +1,28 @@
 require('express-async-errors')
+const { z } = require('zod')
+const { fromZodError } = require('zod-validation-error')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 
 const User = require('../models').User
 const Blog = require('../models').Blog
 const variables = require('../util/variables')
+const schema = require('../util/schema')
+const regx = require('../util/regex')
 
-const signup = async (req, res) => {
+const create = async (req, res) => {
   const { name, username, password } = req.body
   const saltRounds = 10
 
   const user = await User.findOne({ where: { username: username } })
+  const response = schema.signupSchema.safeParse(req.body)
   if (user) throw Error('Cannot use the username provided!')
+  if (!response.success) {
+    const validationError = fromZodError(response.error)
+    const path = validationError.details.map((e) => e.path)
+    const msg = validationError.details.map((e) => e.message)
+    res.status(400).json({ error: `${msg[0]} ${path}` })
+  }
 
   const passwordHash = await bcrypt.hash(password, saltRounds)
   const data = {
@@ -19,12 +30,24 @@ const signup = async (req, res) => {
     name: name,
     passwordHash: passwordHash,
   }
-  let newUser = await User.create(data)
-  return res.status(201).json(newUser)
+  let newUser = User.build(data)
+  await newUser.save()
+  let findUser = await User.findByPk(newUser.id, {
+    attributes: { exclude: ['passwordHash'] },
+  })
+  res.status(201).json(findUser)
 }
 
 const login = async (req, res) => {
   const { username, password } = req.body
+
+  const response = schema.loginSchema.safeParse(req.body)
+  if (!response.success) {
+    const validationError = fromZodError(response.error)
+    const path = validationError.details.map((e) => e.path)
+    const msg = validationError.details.map((e) => e.message)
+    res.status(400).json({ error: `${msg[0]} ${path}` })
+  }
 
   const user = await User.findOne({
     where: { username: username },
@@ -37,7 +60,9 @@ const login = async (req, res) => {
         username: user.username,
         id: user.id,
       }
-      let token = jwt.sign(userToken, variables.jwt_key, { expiresIn: '1h' })
+      let token = jwt.sign(userToken, variables.jwt_key, {
+        expiresIn: '1h',
+      })
 
       const decode = jwt.decode(token, variables.jwt_key)
 
@@ -65,9 +90,9 @@ const list = async (req, res) => {
         as: 'blogs',
       },
     ],
+    order: [['createdAt', 'DESC']],
   })
 
-  //console.log(JSON.stringify(users, null, 2))
   res.status(200).json(users)
 }
 
@@ -89,10 +114,21 @@ const update = async (req, res) => {
   const username = req.params.username
   const currentUser = req.currentUser
   const user = await User.findOne({ where: { username: username } })
+  const updateSchema = z.object({
+    name: z.string().trim().regex(regx.name).default(user.name),
+    username: z.string().trim().email().default(user.email),
+  })
+  const response = updateSchema.safeParse(req.body)
 
   if (!user) throw Error('User not found!')
   if (currentUser.username !== username) {
     throw Error('Unauthorize to update user!')
+  }
+  if (!response.success) {
+    const validationError = fromZodError(response.error)
+    const path = validationError.details.map((e) => e.path)
+    const msg = validationError.details.map((e) => e.message)
+    res.status(400).json({ error: `${msg[0]} ${path}` })
   }
 
   const updateUser = await User.update(req.body, {
@@ -106,7 +142,7 @@ const update = async (req, res) => {
 }
 
 module.exports = {
-  signup,
+  create,
   login,
   list,
   retrieve,

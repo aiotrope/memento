@@ -73,6 +73,11 @@ $ sequelize init
 # create models and migrations with sequelize-cli
 $ sequelize model:generate --name ModelName --attributes name:string,username:string,password:string
 
+# adding new column to an existing table schema
+$ sequelize migration:create --name name_of_the_migration_file
+$ sequelize db:migrate
+
+
 # migration to create db table
 $ sequelize db:migrate
 

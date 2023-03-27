@@ -11,7 +11,7 @@ const userRouter = require('./routes/user')
 const blogRouter = require('./routes/blog')
 const authorRouter = require('./routes/author')
 
-//const db = require('./models')
+const db = require('./models')
 
 const app = express()
 
@@ -31,9 +31,9 @@ app.use(express.static('build'))
 
 app.use(express.static(path.join(__dirname, 'public')))
 
-/* db.sequelize.sync({ force: true }).then(() => {
+db.sequelize.sync({ force: true }).then(() => {
   console.log('db has been re sync')
-}) */
+})
 
 app.use('/api/users', userRouter)
 
