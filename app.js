@@ -10,6 +10,7 @@ const middleware = require('./util/middleware')
 const userRouter = require('./routes/user')
 const blogRouter = require('./routes/blog')
 const authorRouter = require('./routes/author')
+const readinglistRouter = require('./routes/readinglist')
 
 const db = require('./models')
 
@@ -40,6 +41,8 @@ app.use('/api/users', userRouter)
 app.use('/api/blogs', blogRouter)
 
 app.use('/api/authors', authorRouter)
+
+app.use('/api/readinglists', readinglistRouter)
 
 app.use(require('sanitize').middleware)
 

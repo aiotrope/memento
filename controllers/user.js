@@ -104,6 +104,7 @@ const retrieve = async (req, res) => {
       {
         model: Blog,
         as: 'blogs',
+        attributes: ['id', 'url', 'title', 'author', 'likes', 'year'],
       },
     ],
   })
