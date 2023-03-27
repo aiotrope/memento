@@ -97,6 +97,12 @@ const errorHandler = (error, req, res, next) => {
   if (error.message === 'Unauthorize to update user!') {
     res.status(401).json({ error: error.message })
   }
+  if (error.message === 'Reading list item not found!') {
+    res.status(404).json({ error: error.message })
+  }
+  if (error.message === 'Unauthorize to update reading list item!') {
+    res.status(401).json({ error: error.message })
+  }
 
   next(error)
 }

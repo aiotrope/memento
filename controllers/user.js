@@ -87,7 +87,7 @@ const list = async (req, res) => {
     include: [
       {
         model: Blog,
-        as: 'blogs',
+        as: 'readings',
       },
     ],
     order: [['createdAt', 'DESC']],
@@ -99,12 +99,17 @@ const list = async (req, res) => {
 const retrieve = async (req, res) => {
   const id = req.params.id
   const user = await User.findByPk(id, {
-    attributes: { exclude: ['passwordHash'] },
+    attributes: { exclude: ['id', 'passwordHash', 'createdAt', 'updatedAt'] },
     include: [
       {
         model: Blog,
-        as: 'blogs',
+        as: 'readings',
         attributes: ['id', 'url', 'title', 'author', 'likes', 'year'],
+        through: {
+          attributes: {
+            exclude: ['userId', 'blogId', 'createdAt', 'updatedAt'],
+          },
+        },
       },
     ],
   })
