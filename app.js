@@ -4,17 +4,28 @@ const cookieParser = require('cookie-parser')
 const logger = require('morgan')
 const cors = require('cors')
 const helmet = require('helmet')
+const nocache = require('nocache')
+const RedisStore = require('connect-redis').default
+const session = require('express-session')
 
 const middleware = require('./util/middleware')
-
+const redisClient = require('./util/redis')
+const variables = require('./util/variables')
 const userRouter = require('./routes/user')
 const blogRouter = require('./routes/blog')
 const authorRouter = require('./routes/author')
 const readinglistRouter = require('./routes/readinglist')
 
-const db = require('./models')
+let redisStore = new RedisStore({
+  client: redisClient,
+})
 
 const app = express()
+
+// if run behind a proxy (e.g. nginx)
+// app.set('trust proxy', 1);
+
+const db = require('./models')
 
 app.use(cookieParser())
 
@@ -24,9 +35,33 @@ app.use(logger('dev'))
 
 app.use(express.urlencoded({ extended: false }))
 
-app.use(cors())
+app.use(
+  cors({
+    origin: ['http://localhost:3000'],
+  })
+)
+
+app.disable('x-powered-by')
 
 app.use(helmet())
+
+app.use(nocache())
+
+app.use(
+  session({
+    store: redisStore,
+    secret: [variables.cookie_secret1, variables.cookie_secret2],
+    name: variables.cookie_name,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production' ? true : false, // if true only transmit cookie over https
+      httpOnly: false, // if true prevent client side JS from reading the cookie
+      maxAge: 1000 * 60 * 30, // session max age in miliseconds (30mins)
+      sameSite: 'lax',
+    },
+  })
+)
 
 app.use(express.static('build'))
 

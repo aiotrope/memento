@@ -9,6 +9,7 @@ const Blog = require('../models').Blog
 const variables = require('../util/variables')
 const schema = require('../util/schema')
 const regx = require('../util/regex')
+const redisClient = require('../util/redis')
 
 const create = async (req, res) => {
   const { name, username, password } = req.body
@@ -63,17 +64,34 @@ const login = async (req, res) => {
       let token = jwt.sign(userToken, variables.jwt_key, {
         expiresIn: '1h',
       })
+      let tokenKey = `TOKEN_${user.id}`
+      await redisClient.set(tokenKey, token, 'EX', 60 * 60) // 1 hr. exp
+
+      let refreshToken = jwt.sign(userToken, variables.jwt_refresh_key, {
+        expiresIn: '30d',
+      })
+      let refreshTokenKey = `REFRESH-TOKEN_${user.id}`
+      await redisClient.set(
+        refreshTokenKey,
+        refreshToken,
+        'EX',
+        24 * 60 * 60 * 30 //  30 days exp
+      )
 
       const decode = jwt.decode(token, variables.jwt_key)
 
       const id = decode.id
 
+      req.session.username = user.username
+      req.session.password = password
+
       res.status(200).json({
         message: 'login successful',
-        token: token,
         username: user.username,
         name: user.name,
         id: id,
+        token: token,
+        refreshToken: refreshToken,
       })
     }
   }
@@ -147,10 +165,63 @@ const update = async (req, res) => {
   }
 }
 
+const requestAuthTokens = async (req, res) => {
+  const { currentUser } = req
+  const { refresh } = req.body
+
+  const refreshTokenKey = `REFRESH-TOKEN_${currentUser.id}`
+
+  const refreshTokenOnDB = await redisClient.get(refreshTokenKey)
+  if (!refreshTokenOnDB) throw Error('Refresh token missing on cache!')
+  if (!refresh) throw Error('Refresh token not provided!')
+  if (refresh !== refreshTokenOnDB) throw Error('Refresh token is incorrect!')
+
+  jwt.verify(refreshTokenOnDB, variables.jwt_refresh_key, (err, user) => {
+    if (err) {
+      res.status(403).json({ error: `Login to your account: ${err}` })
+    }
+
+    const userToken = {
+      username: user.username,
+      id: user.id,
+    }
+
+    let token = jwt.sign(userToken, variables.jwt_key, {
+      expiresIn: '1h',
+    })
+
+    let tokenKey = `TOKEN_${user.id}`
+    redisClient.set(tokenKey, token, 'EX', 60 * 60)
+
+    res.status(201).json({
+      token: token,
+      refreshToken: refreshTokenOnDB,
+    })
+  })
+}
+
+const logout = async (req, res) => {
+  const { user } = req
+
+  /* const token_key = `BL_TOKEN_${user.id}`
+  await redisClient.set(token_key, token)
+  await redisClient.expireat(token_key, tokenExp)
+  await redisClient.del(`REFRESH-TOKEN_${user.id}`) */
+
+  if (req.session) {
+    let tokenKey = `TOKEN_${user.id}`
+    await redisClient.del(tokenKey)
+    req.session.destroy()
+    res.status(200).json({ message: `${user.username} logout successfully!` })
+  }
+}
+
 module.exports = {
   create,
   login,
   list,
   retrieve,
   update,
+  requestAuthTokens,
+  logout,
 }

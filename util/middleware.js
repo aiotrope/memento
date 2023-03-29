@@ -17,21 +17,35 @@ const tokenExtractor = (req, res, next) => {
 const userExtractor = async (req, res, next) => {
   const token = req.token
 
-  const decoded = jwt.decode(token, variables.jwt_key)
+  try {
+    const decoded = jwt.verify(token, variables.jwt_key)
+    console.log(decoded)
 
-  const currentUser = await User.findByPk(decoded.id)
-  if (!currentUser || !token || !decoded) {
-    next(createError(401))
-  } else if (currentUser || token || decoded) {
-    req.currentUser = currentUser
+    const currentUser = await User.findByPk(decoded.id)
 
-    req.name = currentUser.name
-
-    req.user = decoded
-  } else {
-    next(createError(401))
+    if (!currentUser || !token || !decoded) {
+      next(createError(401))
+    } else if (currentUser || token || decoded) {
+      req.currentUser = currentUser
+      req.name = currentUser.name
+      req.user = decoded
+      req.tokenExp = decoded.exp
+    } else {
+      next(createError(401))
+    }
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      next(createError(403))
+    }
   }
 
+  next()
+}
+
+const authenticatedSession = (req, res, next) => {
+  if (!req.session || !req.session.username || !req.session.password) {
+    next(createError(401))
+  }
   next()
 }
 
@@ -77,7 +91,10 @@ const errorHandler = (error, req, res, next) => {
   ) {
     return res
       .status(401)
-      .json({ error: 'unauthorize: token maybe incorrect or missing!' })
+      .json({ error: 'Unauthorize! token maybe incorrect or missing' })
+  }
+  if (error.message === 'TokenExpiredError') {
+    res.status(403).json({ error: error.message })
   }
   if (error.message === 'Cannot use the username provided!') {
     res.status(422).json({ error: error.message })
@@ -103,6 +120,15 @@ const errorHandler = (error, req, res, next) => {
   if (error.message === 'Unauthorize to update reading list item!') {
     res.status(401).json({ error: error.message })
   }
+  if (error.message === 'Refresh token missing on cache!') {
+    res.status(403).json({ error: error.message })
+  }
+  if (error.message === 'Refresh token not provided!') {
+    res.status(401).json({ error: error.message })
+  }
+  if (error.message === 'Refresh token is incorrect!') {
+    res.status(403).json({ error: error.message })
+  }
 
   next(error)
 }
@@ -113,6 +139,7 @@ const middleware = {
   validate,
   tokenExtractor,
   userExtractor,
+  authenticatedSession,
 }
 
 module.exports = middleware
