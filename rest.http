@@ -1,0 +1,99 @@
+### All Users
+GET http://localhost:8080/api/users
+
+### Single User
+GET http://localhost:8080/api/users/1
+Content-Type: application/json
+
+
+### Signup
+POST http://localhost:8080/api/users/signup
+Content-Type: application/json
+
+{
+    "username": "user1@example.io",
+    "name": "Juan Dela Cruz",
+    "password": "password1%"
+}
+
+
+### Login
+POST http://localhost:8080/api/users/login
+Content-Type: application/json
+
+{
+    "username": "user1@example.io",
+    "password": "password1%"
+}
+
+
+### Update Single User with username params
+PATCH http://localhost:8080/api/users/user1@example.io
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMDcyNDEsImV4cCI6MTY4MDIxMDg0MSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.KnsOy5rNb0P63GS6LoYj_zTllgRJ38-7WYqzfDSisO0
+
+{
+    "username": "user2@example.io",
+    "name": "Boyd K. Montgomery",
+    "password": "password2#"
+   
+}
+
+
+### Logout
+DELETE http://localhost:8080/api/users/logout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMDc4NzUsImV4cCI6MTY4MDIxMTQ3NSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.1xHPZPF-nK_PukClp2tKWY6xRfHULWJAMUzy2JS_ofk
+
+
+### Request new access token
+POST http://localhost:8080/api/users/auth-tokens
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMDc4MzgsImV4cCI6MTY4MDIxMTQzOCwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.nw8L4CzT5mXvbiYx8mDQdDYuAVFhJCZi2uzj5DZURc4
+
+{
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMDc4MzgsImV4cCI6MTY4Mjc5OTgzOCwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.5ClMUHgz9KHRw66pURPKk7VxIMX3pOzEVkDqVvPxRrw"
+}
+
+### All Blogs
+GET http://localhost:8080/api/blogs
+Content-Type: application/json
+
+
+### Single blog
+GET http://localhost:8080/api/blogs/20
+Content-Type: application/json
+
+
+### Create blog
+POST http://localhost:8080/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMTE2MjEsImV4cCI6MTY4MDIxNTIyMSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.2Z_wpxsKIYZOTv-jznob3vhqk_Lk93IZHp30a3gDvv4
+
+{
+    
+    "title": "TDD Harms Architecture",
+    "url": "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
+    "author": "Robert C. Martin",
+    "likes": 7,
+    "year": 2000
+}
+
+### Update blog
+PUT http://localhost:8080/api/blogs/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMTE2MjEsImV4cCI6MTY4MDIxNTIyMSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.2Z_wpxsKIYZOTv-jznob3vhqk_Lk93IZHp30a3gDvv4
+
+{
+    
+    "title": "TDD Harms Architecture",
+    "url": "http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html",
+    "author": "Robert C. Martin",
+    "likes": 9,
+    "year": 2004
+}
+
+
+### Delete blog
+DELETE  http://localhost:8080/api/blogs/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAxNDUyNDYsImV4cCI6MTY4MDE0ODg0NiwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.ZNilGS_jfT58qR5S4nrYLv0pRglFopblHU_aHOPYTWs
+

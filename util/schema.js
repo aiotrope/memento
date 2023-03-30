@@ -2,6 +2,13 @@ const { z } = require('zod')
 
 const regx = require('../util/regex')
 
+const options = {
+  delimiter: {
+    error: ' 🔥 ',
+  },
+  transform: ({ errorMessage }) => `${errorMessage}`,
+}
+
 const signupSchema = z.object({
   name: z.string().trim().regex(regx.name),
   username: z.string().trim().email(),
@@ -29,6 +36,7 @@ const schema = {
   signupSchema,
   loginSchema,
   createBlogSchema,
+  options,
 }
 
 module.exports = schema

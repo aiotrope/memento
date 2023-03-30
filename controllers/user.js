@@ -1,7 +1,9 @@
-require('express-async-errors')
+//require('express-async-errors')
+const createError = require('http-errors')
 const { z } = require('zod')
-const { fromZodError } = require('zod-validation-error')
-const jwt = require('jsonwebtoken')
+//const { fromZodError } = require('zod-validation-error')
+const { generateErrorMessage } = require('zod-error')
+const JWT = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 
 const User = require('../models').User
@@ -10,112 +12,119 @@ const variables = require('../util/variables')
 const schema = require('../util/schema')
 const regx = require('../util/regex')
 const redisClient = require('../util/redis')
+const jwt_helpers = require('../util/jwt_helpers')
 
-const create = async (req, res) => {
+const create = async (req, res, next) => {
   const { name, username, password } = req.body
   const saltRounds = 10
 
-  const user = await User.findOne({ where: { username: username } })
-  const response = schema.signupSchema.safeParse(req.body)
-  if (user) throw Error('Cannot use the username provided!')
-  if (!response.success) {
-    const validationError = fromZodError(response.error)
-    const path = validationError.details.map((e) => e.path)
-    const msg = validationError.details.map((e) => e.message)
-    res.status(400).json({ error: `${msg[0]} ${path}` })
-  }
+  try {
+    const userExist = await User.findOne({ where: { username: username } })
+    const response = schema.signupSchema.safeParse(req.body)
+    if (userExist)
+      throw createError.Conflict('Cannot use the username provided!')
+    if (!response.success) {
+      const errorMessage = generateErrorMessage(
+        response.error.issues,
+        schema.options
+      )
+      throw createError.BadRequest(errorMessage)
+    }
 
-  const passwordHash = await bcrypt.hash(password, saltRounds)
-  const data = {
-    username: username,
-    name: name,
-    passwordHash: passwordHash,
+    const passwordHash = await bcrypt.hash(password, saltRounds)
+    const data = {
+      username: username,
+      name: name,
+      passwordHash: passwordHash,
+    }
+    let newUser = User.build(data)
+    await newUser.save()
+    let findUser = await User.findByPk(newUser.id, {
+      attributes: { exclude: ['passwordHash'] },
+    })
+    res.status(201).json(findUser)
+  } catch (error) {
+    next(error)
   }
-  let newUser = User.build(data)
-  await newUser.save()
-  let findUser = await User.findByPk(newUser.id, {
-    attributes: { exclude: ['passwordHash'] },
-  })
-  res.status(201).json(findUser)
 }
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   const { username, password } = req.body
 
-  const response = schema.loginSchema.safeParse(req.body)
-  if (!response.success) {
-    const validationError = fromZodError(response.error)
-    const path = validationError.details.map((e) => e.path)
-    const msg = validationError.details.map((e) => e.message)
-    res.status(400).json({ error: `${msg[0]} ${path}` })
-  }
+  try {
+    const response = schema.loginSchema.safeParse(req.body)
 
-  const user = await User.findOne({
-    where: { username: username },
-  })
+    const user = await User.findOne({
+      where: { username: username },
+    })
 
-  if (user) {
-    const passwordVerified = await bcrypt.compare(password, user.passwordHash)
-    if (passwordVerified) {
-      const userToken = {
-        username: user.username,
-        id: user.id,
-      }
-      let token = jwt.sign(userToken, variables.jwt_key, {
-        expiresIn: '1h',
-      })
-      let tokenKey = `TOKEN_${user.id}`
-      await redisClient.set(tokenKey, token, 'EX', 60 * 60) // 1 hr. exp
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash)
 
-      let refreshToken = jwt.sign(userToken, variables.jwt_refresh_key, {
-        expiresIn: '30d',
-      })
-      let refreshTokenKey = `REFRESH-TOKEN_${user.id}`
-      await redisClient.set(
-        refreshTokenKey,
-        refreshToken,
-        'EX',
-        24 * 60 * 60 * 30 //  30 days exp
+    if (!response.success) {
+      const errorMessage = generateErrorMessage(
+        response.error.issues,
+        schema.options
       )
-
-      const decode = jwt.decode(token, variables.jwt_key)
-
-      const id = decode.id
-
-      req.session.username = user.username
-      req.session.password = password
-
-      res.status(200).json({
-        message: 'login successful',
-        username: user.username,
-        name: user.name,
-        id: id,
-        token: token,
-        refreshToken: refreshToken,
-      })
+      throw createError.BadRequest(errorMessage)
     }
+
+    if (!user) throw createError.NotFound(`No account for ${username}`)
+
+    if (!passwordMatch)
+      throw createError.Unauthorized('Incorrect login credentials')
+
+    const accessToken = await jwt_helpers.signAccessToken(user.id)
+    const refreshToken = await jwt_helpers.signRefreshToken(user.id)
+
+    const decode = JWT.decode(accessToken, variables.jwt_key)
+
+    const id = Number(decode.aud)
+
+    const sess = req.session
+
+    sess.username = user.username
+    sess.password = password
+    sess.access = accessToken
+    sess.refresh = refreshToken
+    sess.authUserId = id
+
+    res.status(200).json({
+      message: 'login successful',
+      username: user.username,
+      name: user.name,
+      id: id,
+      access: accessToken,
+      refresh: refreshToken,
+    })
+  } catch (error) {
+    next(error)
   }
 }
 
-const list = async (req, res) => {
-  const users = await User.findAll({
-    raw: true,
-    nest: true,
-    attributes: { exclude: ['passwordHash'] },
-    include: [
-      {
-        model: Blog,
-        as: 'readings',
-      },
-    ],
-    order: [['createdAt', 'DESC']],
-  })
+const list = async (req, res, next) => {
+  try {
+    const users = await User.findAll({
+      raw: true,
+      nest: true,
+      attributes: { exclude: ['passwordHash'] },
+      include: [
+        {
+          model: Blog,
+          as: 'readings',
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+    })
 
-  res.status(200).json(users)
+    res.status(200).json(users)
+  } catch (error) {
+    next(error)
+  }
 }
 
-const retrieve = async (req, res) => {
+const retrieve = async (req, res, next) => {
   const id = req.params.id
+
   const user = await User.findByPk(id, {
     attributes: { exclude: ['id', 'passwordHash', 'createdAt', 'updatedAt'] },
     include: [
@@ -131,88 +140,113 @@ const retrieve = async (req, res) => {
       },
     ],
   })
-  if (!user) throw Error('User not found!')
+  if (!user) {
+    return next(createError(404, 'User not found'))
+  }
   res.status(200).json(user)
 }
-const update = async (req, res) => {
-  const username = req.params.username
-  const currentUser = req.currentUser
-  const user = await User.findOne({ where: { username: username } })
-  const updateSchema = z.object({
-    name: z.string().trim().regex(regx.name).default(user.name),
-    username: z.string().trim().email().default(user.email),
-  })
-  const response = updateSchema.safeParse(req.body)
 
-  if (!user) throw Error('User not found!')
-  if (currentUser.username !== username) {
-    throw Error('Unauthorize to update user!')
-  }
-  if (!response.success) {
-    const validationError = fromZodError(response.error)
-    const path = validationError.details.map((e) => e.path)
-    const msg = validationError.details.map((e) => e.message)
-    res.status(400).json({ error: `${msg[0]} ${path}` })
-  }
+const update = async (req, res, next) => {
+  try {
+    const { username } = req.params
+    const sess = req.session
+    const user = await User.findOne({ where: { username: username } })
 
-  const updateUser = await User.update(req.body, {
-    where: { username: username },
-  })
+    if (!user) throw createError.NotFound(`No account for ${username}`)
+    if (sess.username !== username) {
+      throw createError.Forbidden(`Not allowed to edit user: ${sess.username}`)
+    }
+    if (!sess) throw createError.Unauthorized('Login to your account')
 
-  if (updateUser) {
-    const updatedUser = await User.findOne({ where: { username: username } })
-    res.status(200).json(updatedUser)
+    const passwordMatch = await bcrypt.compare(sess.password, user.passwordHash)
+
+    if (!passwordMatch)
+      throw createError.UnprocessableEntity('Credential and session mismatch')
+
+    const updateSchema = z.object({
+      name: z.string().trim().regex(regx.name).default(user.name),
+      username: z.string().trim().email().default(sess.username),
+      password: z.string().trim().regex(regx.password).default(sess.password),
+    })
+    const response = updateSchema.safeParse(req.body)
+
+    if (!response.success) {
+      const errorMessage = generateErrorMessage(
+        response.error.issues,
+        schema.options
+      )
+      throw createError.BadRequest(errorMessage)
+    }
+    //console.log(response)
+    const saltRounds = 10
+    const passwordHash = await bcrypt.hash(response.data.password, saltRounds)
+    const data = {
+      username: response.data.username,
+      name: response.data.name,
+      passwordHash: passwordHash,
+    }
+
+    const updateUser = await User.update(data, {
+      where: { username: username },
+    })
+
+    if (updateUser) {
+      sess.username = response.data.username
+      sess.password = response.data.password
+
+      const updatedUser = await User.findOne({
+        where: { username: response.data.username },
+        attributes: {
+          exclude: ['passwordHash'],
+        },
+      })
+
+      res.status(200).json(updatedUser)
+    }
+  } catch (error) {
+    next(error)
   }
 }
 
 const requestAuthTokens = async (req, res) => {
-  const { currentUser } = req
   const { refresh } = req.body
+  const sess = req.session
 
-  const refreshTokenKey = `REFRESH-TOKEN_${currentUser.id}`
+  //const refreshTokenKey = `REFRESH-TOKEN_${sess.authUserId}`
 
-  const refreshTokenOnDB = await redisClient.get(refreshTokenKey)
-  if (!refreshTokenOnDB) throw Error('Refresh token missing on cache!')
-  if (!refresh) throw Error('Refresh token not provided!')
-  if (refresh !== refreshTokenOnDB) throw Error('Refresh token is incorrect!')
+  const refreshTokenOnDB = await sess.refresh
+  if (!refreshTokenOnDB)
+    throw createError.Unauthorized('Refresh token missing on cache!')
+  if (!refresh) throw createError.BadRequest('Refresh token not provided!')
+  if (refresh !== refreshTokenOnDB)
+    throw createError.Unauthorized('Refresh token is incorrect!')
 
-  jwt.verify(refreshTokenOnDB, variables.jwt_refresh_key, (err, user) => {
-    if (err) {
-      res.status(403).json({ error: `Login to your account: ${err}` })
-    }
+  const userId = await jwt_helpers.verifyRefreshToken(refreshTokenOnDB)
 
-    const userToken = {
-      username: user.username,
-      id: user.id,
-    }
+  const access = await jwt_helpers.signAccessToken(userId)
+  const refreshToken = await jwt_helpers.signRefreshToken(userId)
 
-    let token = jwt.sign(userToken, variables.jwt_key, {
-      expiresIn: '1h',
-    })
+  sess.access = access
+  sess.refresh = refreshToken
 
-    let tokenKey = `TOKEN_${user.id}`
-    redisClient.set(tokenKey, token, 'EX', 60 * 60)
-
-    res.status(201).json({
-      token: token,
-      refreshToken: refreshTokenOnDB,
-    })
+  res.status(201).json({
+    access: access,
+    refresh: refreshToken,
   })
 }
 
-const logout = async (req, res) => {
-  const { user } = req
+const logout = async (req, res, next) => {
+  const sess = req.session
+  try {
+    if (!sess || !sess.username)
+      throw createError.Unauthorized('Login to your account')
 
-  /* const token_key = `BL_TOKEN_${user.id}`
-  await redisClient.set(token_key, token)
-  await redisClient.expireat(token_key, tokenExp)
-  await redisClient.del(`REFRESH-TOKEN_${user.id}`) */
+    await req.session.destroy()
+    await redisClient.flushall()
 
-  if (req.session) {
-    let tokenKey = `TOKEN_${user.id}`
-    await redisClient.del(tokenKey)
-    req.session.destroy()
-    res.status(200).json({ message: `${user.username} logout successfully!` })
+    res.status(200).json({ message: `${sess.username} logout successfully!` })
+  } catch (error) {
+    next(error)
   }
 }
 
