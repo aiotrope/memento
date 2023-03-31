@@ -5,20 +5,14 @@ const logger = require('morgan')
 const cors = require('cors')
 const helmet = require('helmet')
 const nocache = require('nocache')
-const RedisStore = require('connect-redis').default
 const session = require('express-session')
 
 const middleware = require('./util/middleware')
-const redisClient = require('./util/redis')
 const variables = require('./util/variables')
 const userRouter = require('./routes/user')
 const blogRouter = require('./routes/blog')
 const authorRouter = require('./routes/author')
 const readinglistRouter = require('./routes/readinglist')
-
-let redisStore = new RedisStore({
-  client: redisClient,
-})
 
 const app = express()
 
@@ -49,7 +43,9 @@ app.use(nocache())
 
 app.use(
   session({
-    store: redisStore,
+    store: new (require('connect-pg-simple')(session))({
+      createTableIfMissing: true,
+    }),
     secret: [variables.cookie_secret1, variables.cookie_secret2],
     name: variables.cookie_name,
     resave: false,
@@ -57,7 +53,7 @@ app.use(
     cookie: {
       secure: process.env.NODE_ENV === 'production' ? true : false, // if true only transmit cookie over https
       httpOnly: false, // if true prevent client side JS from reading the cookie
-      maxAge: 1000 * 60 * 30, // session max age in miliseconds (30mins)
+      maxAge: 1000 * 60 * 600, // session max age in miliseconds (1 hr)
       sameSite: 'lax',
     },
   })

@@ -1,15 +1,10 @@
-//require('express-async-errors')
 const createError = require('http-errors')
-const JWT = require('jsonwebtoken')
-
 const { Op } = require('sequelize')
-const { z } = require('zod')
 const { generateErrorMessage } = require('zod-error')
 
 const schema = require('../util/schema')
 const Blog = require('../models').Blog
 const User = require('../models').User
-const variables = require('../util/variables')
 
 const create = async (req, res, next) => {
   const sess = req.session
@@ -59,51 +54,54 @@ const list = async (req, res) => {
     },
     order: [['likes', 'DESC']],
   })
-  const sess = req.session
-  sess.blogs = blogs
 
   res.status(200).json(blogs)
 }
 
 const retrieve = async (req, res, next) => {
   const { id } = req.params
-  const blog = await Blog.findByPk(id)
 
-  if (!blog) {
-    return next(createError(404, 'Blog not found'))
+  try {
+    const blog = await Blog.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'users',
+          attributes: { exclude: ['passwordHash'] },
+        },
+      ],
+    })
+    if (!blog) {
+      return next(createError(404, 'Blog not found'))
+    }
+    res.status(200).json(blog)
+  } catch (error) {
+    next(error)
   }
-  console.error(blog)
-  res.status(200).json({ blog })
-
-  next()
 }
 
 const update = async (req, res, next) => {
   const sess = req.session
+  const { id } = req.params
 
   try {
-    const blog = await Blog.findByPk(Number(req.params.id))
-
-    const updateSchema = z.object({
-      title: z.string().trim().min(4).default(blog.title),
-      author: z.string().trim().default(blog.author),
-      url: z.string().trim().url().default(blog.url),
-      likes: z.number().nonnegative().default(blog.likes),
-      year: z
-        .number()
-        .nonnegative()
-        .gte(1991)
-        .lte(parseInt(new Date().getFullYear()))
-        .default(blog.year),
+    const blog = await Blog.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'users',
+          attributes: { exclude: ['passwordHash'] },
+        },
+      ],
     })
 
-    const response = updateSchema.safeParse(req.body)
-
+    const response = schema.createBlogSchema.safeParse(req.body)
     const currentUser = await User.findByPk(sess.authUserId)
 
     if (!blog) throw createError.NotFound('Blog not found!')
-    if (!currentUser) throw createError.NotFound('User not found!')
-    if (blog.users.id !== currentUser.id) {
+    if (!currentUser) throw createError.Unauthorized('Auth user not found!')
+    const blogUserId = blog?.users?.map((b) => b.id)
+    if (Number(blogUserId) !== Number(currentUser.id)) {
       throw createError.Forbidden(`Not allowed to update ${blog.title}`)
     }
 
@@ -115,36 +113,41 @@ const update = async (req, res, next) => {
       throw createError.BadRequest(errorMessage)
     }
 
-    const data = {
-      title: response.data.title,
-      url: response.data.url,
-      author: response.data.author,
-      likes: response.likes,
-      year: response.data.year,
-    }
-
-    const updateBlog = await Blog.update(data, {
-      where: { id: req.params.id },
+    const updateBlog = await Blog.update(req.body, {
+      where: { id: id },
     })
     if (updateBlog) {
-      const updatedBlog = await Blog.findOne({ where: { id: req.params.id } })
+      const updatedBlog = await Blog.findOne({ where: { id: id } })
       res.status(200).json(updatedBlog)
     }
   } catch (error) {
     next(error)
   }
 }
+
 const omit = async (req, res, next) => {
-  JWT.verify(req.access, variables.jwt_key)
+  const sess = req.session
+  const { id } = req.params
   try {
-    const currentUser = req.currentUser
-    const blog = await Blog.findByPk(req.params.id)
+    const blog = await Blog.findByPk(id, {
+      include: [
+        {
+          model: User,
+          as: 'users',
+          attributes: { exclude: ['passwordHash'] },
+        },
+      ],
+    })
+
+    const currentUser = await User.findByPk(sess.authUserId)
+    const blogUserId = blog?.users?.map((b) => b.id)
 
     if (!blog) throw createError.NotFound('Blog not found!')
-    if (blog?.users?.id !== currentUser.id) {
+    if (!currentUser) throw createError.Unauthorized('Auth user not found!')
+    if (Number(blogUserId) !== Number(currentUser.id)) {
       throw createError.Forbidden(`Not allowed to delete ${blog.title}`)
     }
-    const deleteBlog = await Blog.destroy({ where: { id: req.params.id } })
+    const deleteBlog = await Blog.destroy({ where: { id: id } })
     if (deleteBlog) {
       res
         .status(204)

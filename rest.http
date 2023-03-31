@@ -30,7 +30,7 @@ Content-Type: application/json
 ### Update Single User with username params
 PATCH http://localhost:8080/api/users/user1@example.io
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMDcyNDEsImV4cCI6MTY4MDIxMDg0MSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.KnsOy5rNb0P63GS6LoYj_zTllgRJ38-7WYqzfDSisO0
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjEzOTMsImV4cCI6MTY4MDIyNDk5MywiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.EiqEUmdv03Op_XV_76QGjOR9Fxre2Y6WI1NeOUj4Do4
 
 {
     "username": "user2@example.io",
@@ -43,7 +43,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMDcyN
 ### Logout
 DELETE http://localhost:8080/api/users/logout
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMDc4NzUsImV4cCI6MTY4MDIxMTQ3NSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.1xHPZPF-nK_PukClp2tKWY6xRfHULWJAMUzy2JS_ofk
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjEzOTMsImV4cCI6MTY4MDIyNDk5MywiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.EiqEUmdv03Op_XV_76QGjOR9Fxre2Y6WI1NeOUj4Do4
 
 
 ### Request new access token
@@ -57,18 +57,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMDc4M
 
 ### All Blogs
 GET http://localhost:8080/api/blogs
-Content-Type: application/json
-
 
 ### Single blog
-GET http://localhost:8080/api/blogs/20
-Content-Type: application/json
-
+GET http://localhost:8080/api/blogs/blog/1
 
 ### Create blog
 POST http://localhost:8080/api/blogs
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMTE2MjEsImV4cCI6MTY4MDIxNTIyMSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.2Z_wpxsKIYZOTv-jznob3vhqk_Lk93IZHp30a3gDvv4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjY2MzMsImV4cCI6MTY4MDIzMDIzMywiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.EfrvWOd4MTJ6gXNmuYrHcthmFidMnuLUhapF5FceMoM
 
 {
     
@@ -80,8 +76,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMTE2M
 }
 
 ### Update blog
-PUT http://localhost:8080/api/blogs/1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMTE2MjEsImV4cCI6MTY4MDIxNTIyMSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.2Z_wpxsKIYZOTv-jznob3vhqk_Lk93IZHp30a3gDvv4
+PUT http://localhost:8080/api/blogs/update/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjQ3MjYsImV4cCI6MTY4MDIyODMyNiwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.c8DhWwH0pJVAZP1sVBx5Sc8cmXvEJ2pOuQDUNbgHMXg
 
 {
     
@@ -94,6 +91,25 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMTE2M
 
 
 ### Delete blog
-DELETE  http://localhost:8080/api/blogs/1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAxNDUyNDYsImV4cCI6MTY4MDE0ODg0NiwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.ZNilGS_jfT58qR5S4nrYLv0pRglFopblHU_aHOPYTWs
+DELETE  http://localhost:8080/api/blogs/omit/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjIyNDEsImV4cCI6MTY4MDIyNTg0MSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.kQpbbO3-G15wIs-Nn2ma5MuJ-Irs41l4Dy6k5e4sLsI
 
+### Authors
+GET http://localhost:8080/api/authors
+
+### List readings
+GET http://localhost:8080/api/readinglists
+
+### Retrieve reading by ID
+GET http://localhost:8080/api/readinglists/retrieve/1
+
+
+### Update Reading lists 
+PATCH http://localhost:8080/api/readinglists/update/1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjUxNTksImV4cCI6MTY4MDIyODc1OSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.-ItJo-Gz51GB5QveDUnGs-ziU4CTcFAxsSujzJajsEA
+
+{
+    "read": true
+}

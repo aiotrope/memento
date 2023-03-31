@@ -1,17 +1,15 @@
 const express = require('express')
 
 const controllers = require('../controllers/readinglist')
-const middleware = require('../util/middleware')
-const tokenExtractor = middleware.tokenExtractor
-const userExtractor = middleware.userExtractor
-const authenticatedSession = middleware.authenticatedSession
+
+const jwt_helpers = require('../util/jwt_helpers')
 
 const router = express.Router()
 
 router.get('/', controllers.list)
 
-router.use(authenticatedSession)
+router.get('/retrieve/:id', controllers.retrieve)
 
-router.patch('/:id', tokenExtractor, userExtractor, controllers.update)
+router.patch('/update/:id', jwt_helpers.verifyAccessToken, controllers.update)
 
 module.exports = router

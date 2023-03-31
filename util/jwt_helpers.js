@@ -2,8 +2,7 @@ const JWT = require('jsonwebtoken')
 const createError = require('http-errors')
 
 const variables = require('./variables')
-const redisClient = require('../util/redis')
-//const User = require('../models').User
+const User = require('../models').User
 
 const signAccessToken = (userId) => {
   return new Promise((resolve, reject) => {
@@ -21,13 +20,6 @@ const signAccessToken = (userId) => {
         reject(createError.InternalServerError())
         return
       }
-
-      const decode = JWT.decode(token, privateKey)
-      //console.log(decode)
-      const tokenKey = `TOKEN_${userId}`
-      redisClient.set(tokenKey, token)
-      redisClient.expireat(tokenKey, decode.exp) // 1 hr. exp
-
       resolve(token)
     })
   })
@@ -47,10 +39,11 @@ const verifyAccessToken = (req, res, next) => {
     }
     req.payload = payload
     req.access = token
-    /*  console.log(payload)
-    const currentUser = await User.findByPk(Number(payload.aud))
-    if (!currentUser) throw createError.NotFound('User not found')
-    req.currentUser = currentUser */
+    console.log(payload)
+    const currentUser = await User.findByPk(payload.aud)
+    if (!currentUser)
+      throw createError.Unauthorized('No authenticated user found!')
+    req.currentUser = currentUser
     next()
   })
 }
@@ -69,25 +62,7 @@ const signRefreshToken = (userId) => {
         console.error(err.message)
         reject(createError.InternalServerError())
       }
-
-      const refreshTokenKey = `REFRESH-TOKEN_${userId}`
-      const decode = JWT.decode(token, privateKey)
-
-      // expire at 30 d.
-      redisClient.set(
-        refreshTokenKey,
-        token,
-        'EXAT',
-        decode.exp,
-        (err, reply) => {
-          if (!reply && err) {
-            console.log(err.message)
-            reject(createError.InternalServerError())
-            return
-          }
-          resolve(token)
-        }
-      )
+      resolve(token)
     })
   })
 }
@@ -105,16 +80,7 @@ const verifyRefreshToken = (refreshToken) => {
         console.log(err)
         if (err) return reject(createError.Unauthorized())
         const userId = payload.aud
-        const refreshTokenKey = `REFRESH-TOKEN_${userId}`
-        redisClient.get(refreshTokenKey, (err, result) => {
-          if (err) {
-            console.log(err)
-            reject(createError.InternalServerError())
-            return
-          }
-          if (refreshToken === result) return resolve(userId)
-          reject(createError.Unauthorized())
-        })
+        return resolve(userId)
       }
     )
   })

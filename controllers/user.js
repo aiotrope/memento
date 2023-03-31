@@ -1,7 +1,4 @@
-//require('express-async-errors')
 const createError = require('http-errors')
-const { z } = require('zod')
-//const { fromZodError } = require('zod-validation-error')
 const { generateErrorMessage } = require('zod-error')
 const JWT = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
@@ -10,8 +7,6 @@ const User = require('../models').User
 const Blog = require('../models').Blog
 const variables = require('../util/variables')
 const schema = require('../util/schema')
-const regx = require('../util/regex')
-const redisClient = require('../util/redis')
 const jwt_helpers = require('../util/jwt_helpers')
 
 const create = async (req, res, next) => {
@@ -163,12 +158,7 @@ const update = async (req, res, next) => {
     if (!passwordMatch)
       throw createError.UnprocessableEntity('Credential and session mismatch')
 
-    const updateSchema = z.object({
-      name: z.string().trim().regex(regx.name).default(user.name),
-      username: z.string().trim().email().default(sess.username),
-      password: z.string().trim().regex(regx.password).default(sess.password),
-    })
-    const response = updateSchema.safeParse(req.body)
+    const response = schema.signupSchema.safeParse(req.body)
 
     if (!response.success) {
       const errorMessage = generateErrorMessage(
@@ -212,16 +202,14 @@ const requestAuthTokens = async (req, res) => {
   const { refresh } = req.body
   const sess = req.session
 
-  //const refreshTokenKey = `REFRESH-TOKEN_${sess.authUserId}`
-
-  const refreshTokenOnDB = await sess.refresh
-  if (!refreshTokenOnDB)
+  const refreshTokenOnSession = await sess.refresh
+  if (!refreshTokenOnSession)
     throw createError.Unauthorized('Refresh token missing on cache!')
   if (!refresh) throw createError.BadRequest('Refresh token not provided!')
-  if (refresh !== refreshTokenOnDB)
+  if (refresh !== refreshTokenOnSession)
     throw createError.Unauthorized('Refresh token is incorrect!')
 
-  const userId = await jwt_helpers.verifyRefreshToken(refreshTokenOnDB)
+  const userId = await jwt_helpers.verifyRefreshToken(refreshTokenOnSession)
 
   const access = await jwt_helpers.signAccessToken(userId)
   const refreshToken = await jwt_helpers.signRefreshToken(userId)
@@ -242,7 +230,6 @@ const logout = async (req, res, next) => {
       throw createError.Unauthorized('Login to your account')
 
     await req.session.destroy()
-    await redisClient.flushall()
 
     res.status(200).json({ message: `${sess.username} logout successfully!` })
   } catch (error) {
