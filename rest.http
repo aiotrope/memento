@@ -2,22 +2,22 @@
 GET http://localhost:8080/api/users
 
 
-### Single User by ID w/o req.query
+### Single user by ID w/o req.query
 GET http://localhost:8080/api/users/1
 Content-Type: application/json
 
 
-### Single User by ID with req.query.read = true
+### Single user by ID with req.query.read = true
 GET http://localhost:8080/api/users/1?read=true
 Content-Type: application/json
 
 
-### Single User by ID with req.query.read = true
+### Single user by ID with req.query.read = true
 GET http://localhost:8080/api/users/1?read=false
 Content-Type: application/json
 
 
-### Signup for non-staff user
+### Signup for non-staff users
 POST http://localhost:8080/api/users/signup
 Content-Type: application/json
 
@@ -29,7 +29,7 @@ Content-Type: application/json
 }
 
 
-### Signup for staff user
+### Signup for staff users
 POST http://localhost:8080/api/users/staff/signup
 Content-Type: application/json
 
@@ -50,7 +50,7 @@ Content-Type: application/json
     "password": "password2#"
 }
 
-### Update Single by username req.params
+### Update user by username with req.params.username
 PATCH http://localhost:8080/api/users/user1@example.io
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjEzOTMsImV4cCI6MTY4MDIyNDk5MywiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.EiqEUmdv03Op_XV_76QGjOR9Fxre2Y6WI1NeOUj4Do4
@@ -148,7 +148,7 @@ Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjIyNDEsImV4cCI6MTY4MDIyNTg0MSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.kQpbbO3-G15wIs-Nn2ma5MuJ-Irs41l4Dy6k5e4sLsI
 
 
-### Aggregate blogs by author field
+### Aggregate blogs by author
 GET http://localhost:8080/api/authors
 
 
