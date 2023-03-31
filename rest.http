@@ -17,15 +17,28 @@ GET http://localhost:8080/api/users/1?read=false
 Content-Type: application/json
 
 
-### Signup
+### Signup for non-staff user
 POST http://localhost:8080/api/users/signup
 Content-Type: application/json
 
 
 {
     "username": "user2@example.io",
+    "name": "Boyd D. Montgomery",
+    "password": "password2#"
+}
+
+
+### Signup for staff user
+POST http://localhost:8080/api/users/staff/signup
+Content-Type: application/json
+
+
+{
+    "username": "user1@example.io",
     "name": "Juan Dela Cruz",
-    "password": "password2%"
+    "password": "password1%",
+    "admin": true
 }
 
 ### Login
@@ -34,7 +47,7 @@ Content-Type: application/json
 
 {
     "username": "user2@example.io",
-    "password": "password2%"
+    "password": "password2#"
 }
 
 ### Update Single by username req.params
@@ -54,6 +67,26 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMjEzO
 DELETE http://localhost:8080/api/users/logout
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyMzEzNjYsImV4cCI6MTY4MDIzNDk2NiwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.VuYWpzRTNFCAvmYo9bx4u1kQc-d_gTbV5gwsPd-8Wng
+
+
+### Deactivate account by auth users
+PATCH http://localhost:8080/api/users/deactivate-account/user2@example.io
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyOTkxMzYsImV4cCI6MTY4MDMwMjczNiwiYXVkIjoiMiIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.fP1D61w6CmA4xUB82-3TJZZKNI6bBijHtsKy_C0ehAM
+
+{
+    "disabled": true
+}
+
+
+### Reactivate an account by staff users only
+PATCH http://localhost:8080/api/users/reactivate-account/user2@example.io
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2ODAyOTkxOTUsImV4cCI6MTY4MDMwMjc5NSwiYXVkIjoiMSIsImlzcyI6ImFybmVsaW1wZXJpYWwuY29tIn0.N0ewAYPljvojmWjyGPSRQozXRnPyzZO0aj5_W9N5l04
+
+{
+    "disabled": false
+}
 
 
 ### Request new access token using refresh token as req.body

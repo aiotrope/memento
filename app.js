@@ -19,6 +19,7 @@ const app = express()
 // if run behind a proxy (e.g. nginx)
 // app.set('trust proxy', 1);
 
+// for dev only
 const db = require('./models')
 
 app.use(cookieParser())
@@ -63,9 +64,11 @@ app.use(express.static('build'))
 
 app.use(express.static(path.join(__dirname, 'public')))
 
-db.sequelize.sync({ force: true }).then(() => {
-  console.log('db has been re sync')
-})
+if (process.env.NODE_ENV === 'development') {
+  db.sequelize.sync({ force: true }).then(() => {
+    console.log('db has been re sync')
+  })
+}
 
 app.use('/api/users', userRouter)
 

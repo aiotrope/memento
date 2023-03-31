@@ -86,11 +86,20 @@ const verifyRefreshToken = (refreshToken) => {
   })
 }
 
+const isAdmin = async (req, res, next) => {
+  const user = await User.findByPk(req.currentUser.id)
+  if (!user.admin) {
+    throw createError.Unauthorized('Not allowed to perform the operation')
+  }
+  next()
+}
+
 const jwt_helpers = {
   signAccessToken,
   verifyAccessToken,
   signRefreshToken,
   verifyRefreshToken,
+  isAdmin,
 }
 
 module.exports = jwt_helpers

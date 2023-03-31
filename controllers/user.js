@@ -1,4 +1,5 @@
 const createError = require('http-errors')
+const { z } = require('zod')
 const { generateErrorMessage } = require('zod-error')
 const JWT = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
@@ -43,6 +44,41 @@ const create = async (req, res, next) => {
   }
 }
 
+const createStaff = async (req, res, next) => {
+  const { username } = req.body
+  const saltRounds = 10
+
+  try {
+    const userExist = await User.findOne({ where: { username: username } })
+    const response = schema.signupStaffSchema.safeParse(req.body)
+    if (userExist)
+      throw createError.Conflict('Cannot use the username provided!')
+    if (!response.success) {
+      const errorMessage = generateErrorMessage(
+        response.error.issues,
+        schema.options
+      )
+      throw createError.BadRequest(errorMessage)
+    }
+
+    const passwordHash = await bcrypt.hash(response.data.password, saltRounds)
+    const data = {
+      username: response.data.username,
+      name: response.data.name,
+      passwordHash: passwordHash,
+      admin: response.data.admin,
+    }
+    let newUser = await User.create(data)
+
+    let findUser = await User.findByPk(newUser.id, {
+      attributes: { exclude: ['passwordHash'] },
+    })
+    res.status(201).json(findUser)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const login = async (req, res, next) => {
   const { username, password } = req.body
 
@@ -67,6 +103,10 @@ const login = async (req, res, next) => {
 
     if (!passwordMatch)
       throw createError.Unauthorized('Incorrect login credentials')
+
+    if (user.disabled) {
+      throw createError.Unauthorized('Account disabled, please contact admin')
+    }
 
     const accessToken = await jwt_helpers.signAccessToken(user.id)
     const refreshToken = await jwt_helpers.signRefreshToken(user.id)
@@ -258,6 +298,62 @@ const logout = async (req, res, next) => {
   }
 }
 
+const deactivate = async (req, res, next) => {
+  const { username } = req.params
+  const sess = req.session
+  const updateSchema = z.object({
+    disabled: z.boolean().default(true),
+  })
+
+  try {
+    const user = await User.findOne({ where: { username: username } })
+
+    if (!user) throw createError.NotFound(`No account for ${username}`)
+    if (sess.username !== username) {
+      throw createError.Forbidden(`Not allowed to edit user: ${sess.username}`)
+    }
+    if (!sess || !sess.username)
+      throw createError.Unauthorized('Login to your account')
+
+    const response = updateSchema.safeParse(req.body)
+
+    user.disabled = response.data.disabled
+    const deactivatedUser = await user.save()
+    res
+      .status(200)
+      .json({ message: `${deactivatedUser.username} deactivated!` })
+
+    if (deactivatedUser) await req.session.destroy()
+  } catch (error) {
+    next(error)
+  }
+}
+
+const reactivate = async (req, res, next) => {
+  const { username } = req.params
+  const sess = req.session
+  const updateSchema = z.object({
+    disabled: z.boolean().default(false),
+  })
+  try {
+    const disabledUser = await User.findOne({ where: { username: username } })
+
+    if (!disabledUser) throw createError.NotFound(`No account for ${username}`)
+    if (!sess || !sess.username)
+      throw createError.Unauthorized('Login to your account')
+
+    const response = updateSchema.safeParse(req.body)
+
+    disabledUser.disabled = response.data.disabled
+    const reactivatedUser = await disabledUser.save()
+    res
+      .status(200)
+      .json({ message: `${reactivatedUser.username} reactivated!` })
+  } catch (error) {
+    next(error)
+  }
+}
+
 module.exports = {
   create,
   login,
@@ -266,4 +362,7 @@ module.exports = {
   update,
   requestAuthTokens,
   logout,
+  deactivate,
+  reactivate,
+  createStaff,
 }

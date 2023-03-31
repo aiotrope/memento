@@ -15,6 +15,13 @@ const signupSchema = z.object({
   password: z.string().trim().regex(regx.password),
 })
 
+const signupStaffSchema = z.object({
+  name: z.string().trim().regex(regx.name),
+  username: z.string().trim().email(),
+  password: z.string().trim().regex(regx.password),
+  admin: z.boolean().default(true),
+})
+
 const loginSchema = z.object({
   username: z.string().trim().email(),
   password: z.string().trim().regex(regx.password),
@@ -37,6 +44,7 @@ const schema = {
   loginSchema,
   createBlogSchema,
   options,
+  signupStaffSchema,
 }
 
 module.exports = schema
