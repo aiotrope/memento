@@ -75,8 +75,8 @@ const login = async (req, res, next) => {
 
     const id = Number(decode.aud)
 
+    // init session parameters
     const sess = req.session
-
     sess.username = user.username
     sess.password = password
     sess.access = accessToken
@@ -119,26 +119,47 @@ const list = async (req, res, next) => {
 
 const retrieve = async (req, res, next) => {
   const id = req.params.id
+  let { read } = req.query
+  let user
 
-  const user = await User.findByPk(id, {
-    attributes: { exclude: ['id', 'passwordHash', 'createdAt', 'updatedAt'] },
-    include: [
-      {
-        model: Blog,
-        as: 'readings',
-        attributes: ['id', 'url', 'title', 'author', 'likes', 'year'],
-        through: {
-          attributes: {
-            exclude: ['userId', 'blogId', 'createdAt', 'updatedAt'],
-          },
+  try {
+    if (!read) {
+      user = await User.findByPk(id, {
+        attributes: {
+          exclude: ['id', 'passwordHash', 'createdAt', 'updatedAt'],
         },
-      },
-    ],
-  })
-  if (!user) {
-    return next(createError(404, 'User not found'))
+        include: [
+          {
+            model: Blog,
+            as: 'readings',
+            attributes: ['id', 'url', 'title', 'author', 'likes', 'year'],
+          },
+        ],
+      })
+
+      if (!user) {
+        return next(createError(404, 'User not found'))
+      }
+      res.status(200).json(user)
+    }
+    user = await User.findByPk(id, {
+      attributes: { exclude: ['id', 'passwordHash', 'createdAt', 'updatedAt'] },
+      include: [
+        {
+          model: Blog,
+          as: 'readings',
+          attributes: ['id', 'url', 'title', 'author', 'likes', 'year'],
+          through: { where: { read: read } },
+        },
+      ],
+    })
+    if (!user) {
+      return next(createError(404, 'User not found'))
+    }
+    res.status(200).json(user)
+  } catch (error) {
+    next(error)
   }
-  res.status(200).json(user)
 }
 
 const update = async (req, res, next) => {

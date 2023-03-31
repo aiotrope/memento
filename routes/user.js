@@ -8,7 +8,7 @@ const router = express.Router()
 router.post('/signup', controllers.create)
 router.post('/login', controllers.login)
 router.get('/', controllers.list)
-router.get('/:id', controllers.retrieve)
+router.get('/:id/:read?', controllers.retrieve)
 
 router.patch('/:username', jwt_helpers.verifyAccessToken, controllers.update)
 

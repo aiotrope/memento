@@ -2,7 +2,7 @@
 
 FSO Part 13
 
-Date: 22.03.2023
+Date: 22.03.2023 - 31.03.2023
 
 ---
 
@@ -81,25 +81,16 @@ $ sequelize db:migrate
 # migration to create db table
 $ sequelize db:migrate
 
-# App
+# API
 
 # generate express app
 $ express --view=ejs backend
-
-# generate react app
-$ yarn create react-app frontend .
 
 # run backend dev server at port:8080
 $ yarn run dev
 
 # run production build at port:8080
 $ yarn start
-
-# run frontend dev server at port:3000
-$ cd frontend && yarn run start
-
-# build static assets (frontend)
-$ yarn build
 
 # format code
 $ yarn prettier
